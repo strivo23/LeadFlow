@@ -1,0 +1,86 @@
+// Prisma schema for LeadFlow (MySQL Production / Docker)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  leads     Lead[]
+  campaigns Campaign[]
+
+  @@map("users")
+}
+
+model Lead {
+  id          String         @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String
+  company     String
+  jobTitle    String
+  phone       String?
+  website     String?
+  industry    String
+  status      String         @default("NEW") // NEW, CONTACTED, QUALIFIED, CONVERTED, LOST
+  source      String?        @default("Website")
+  score       Int            @default(0)
+  notes       String?        @db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  createdById String
+  user        User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  campaignLeads CampaignLead[]
+
+  @@index([email])
+  @@index([status])
+  @@index([company])
+  @@index([createdById])
+  @@map("leads")
+}
+
+model Campaign {
+  id          String         @id @default(uuid())
+  name        String
+  description String?        @db.Text
+  status      String         @default("DRAFT") // DRAFT, ACTIVE, PAUSED, COMPLETED
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  createdById String
+  user        User           @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  campaignLeads CampaignLead[]
+
+  @@index([status])
+  @@index([createdById])
+  @@map("campaigns")
+}
+
+model CampaignLead {
+  id         String   @id @default(uuid())
+  campaignId String
+  leadId     String
+  createdAt  DateTime @default(now())
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, leadId])
+  @@index([campaignId])
+  @@index([leadId])
+  @@map("campaign_leads")
+}

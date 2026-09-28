@@ -1,0 +1,9 @@
+{
+  "version": "0.3.14",
+  "dialect": "mysql",
+  "migrations": [
+    {
+      "tag": "20260928000000_init"
+    }
+  ]
+}
